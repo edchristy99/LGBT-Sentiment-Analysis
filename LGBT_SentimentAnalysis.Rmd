@@ -1,0 +1,139 @@
+
+```{r}
+library(textclean)
+library(katadasaR)
+library(tokenizers)
+library(wordcloud)
+library(dplyr)
+```
+
+```{r}
+tweets <- read.csv("lgbt_3.csv")
+tweets <- tweets$Comment %>% 
+  as.character()
+head(tweets)
+```
+
+```{r}
+tweets[3]
+tweets <- gsub( "\n"," ",tweets)
+tweets[3]
+```
+
+Ganti HTML nya. direplace URL
+```{r}
+tweets <- tweets %>% 
+  replace_html() %>% # replace html with blank 
+  replace_url() 
+
+tweets[3]
+```
+
+replace emot
+```{r}
+tweets <- tweets %>% 
+    replace_emoji(.) %>% 
+    replace_html(.)
+tweets[3]
+```
+
+
+```{r}
+tweets <- tweets %>% 
+  replace_tag(tweets, pattern = "@([A-Za-z0-9_]+)",replacement="") %>%  # remove mentions
+  replace_hash(tweets, pattern = "#([A-Za-z0-9_]+)",replacement="")      # remove hashtags
+
+tweets[3]
+```
+```{r}
+spell.lex <- read.csv("new_kamusalay.csv")
+tweets <- replace_internet_slang(tweets, slang = paste0("\\b",spell.lex$alay,"\\b"), replacement = spell.lex$formal, ignore.case = TRUE)
+head(tweets)
+```
+
+
+```{r}
+tweets <- strip(tweets)
+tweets[3]
+```
+
+```{r}
+tweets <- tweets %>% 
+  as.data.frame() %>% 
+  distinct()
+nrow(tweets)
+```
+
+Stemming
+```{r}
+tweets <- as.character(tweets$.)
+# before stemming
+tweets[3]
+```
+After stemm
+```{r}
+stemming <- function(x){
+  paste(lapply(x,katadasar),collapse = " ")}
+
+tweets <- lapply(tokenize_words(tweets[]), stemming)
+
+# after stemming
+tweets[6]
+```
+[1] "bisa diliat ini mereka berdua open minded bangeeet dan full of understanding gak sok an alay karena mereka beda bahkan ama opini orang lain mereka gak ngejudge balik clapping hands"
+```{r}
+library(tokenizers)
+tweets <- tokenize_words(tweets)
+head(tweets,3)
+```
+
+```{r}
+library(stopwords)
+myStopwords <- read.csv("stopwordbahasa.csv")
+
+head(myStopwords)
+```
+
+
+```{r}
+tweets <- as.character(tweets)
+
+tweets <- tokenize_words(tweets, stopwords = myStopwords)
+head(tweets, 3)
+```
+
+```{r}
+class(tweets)
+```
+
+
+```{r}
+tdm <- TermDocumentMatrix(tweets)
+tdm <- as.matrix(tdm)
+tdm[1:10, 1:20]
+
+```
+
+
+```{r}
+tweets <- as.character(tweets)
+library(wordcloud)
+wordcloud(tweets)
+
+
+library(wordcloud)
+w <- sort(rowSums(tdm), decreasing = TRUE)
+set.seed(222)
+wordcloud(words = names(w),
+          freq = w,
+          max.words = 150,
+          random.order = F,
+          min.freq = 5,
+          colors = brewer.pal(8, 'Dark2'),
+          scale = c(5, 0.3),
+          rot.per = 0.7)
+
+```
+
+
+
